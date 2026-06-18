@@ -24,7 +24,6 @@ class TaskService {
       await this._enqueueJob(task);
       logger.info({ taskId }, 'Task successfully enqueued in Redis');
     } catch (err: any) {
-      logger.error({ taskId, err }, 'Failed to enqueue task. Marking as failed in database');
       taskRepository.updateStatus(taskId, 'failed', {
         error: { message: 'Failed to enqueue job: ' + err.message }
       });
