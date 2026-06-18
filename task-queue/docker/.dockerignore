@@ -1,0 +1,10 @@
+# docker/.dockerignore
+node_modules
+dist
+data
+coverage
+.git
+.github
+*.log
+.env*
+tsconfig.json

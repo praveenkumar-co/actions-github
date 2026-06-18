@@ -1,0 +1,28 @@
+#  this targets the worker entry point rather than the HTTP server.
+FROM node:20-alpine AS builder
+
+WORKDIR /usr/src/app
+
+COPY package*.json tsconfig.json ./
+RUN npm ci
+
+COPY src/ ./src
+COPY worker/ ./worker
+
+RUN npm run build
+RUN mkdir -p dist/src/db/migrations && cp src/db/schema.sql dist/src/db/schema.sql
+RUN npm prune --production
+
+FROM node:20-alpine
+
+ENV NODE_ENV=production
+WORKDIR /usr/src/app
+
+COPY --from=builder /usr/src/app/package*.json ./
+COPY --from=builder /usr/src/app/node_modules ./node_modules
+COPY --from=builder /usr/src/app/dist ./dist
+
+RUN mkdir -p data && chown -R node:node data
+
+USER node
+CMD ["node", "dist/worker/index.js"]

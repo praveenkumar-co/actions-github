@@ -1,0 +1,64 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: task-queue-redis
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - task-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    container_name: task-queue-api
+    ports:
+      - "3009:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - DB_PATH=/usr/src/app/data/tasks.db
+    volumes:
+      - shared_db_data:/usr/src/app/data
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - task-network
+  worker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.worker
+    container_name: task-queue-worker
+    environment:
+      - NODE_ENV=development
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - DB_PATH=/usr/src/app/data/tasks.db
+      - WORKER_CONCURRENCY=5
+    volumes:
+      - shared_db_data:/usr/src/app/data
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - task-network
+
+volumes:
+  redis_data:
+  shared_db_data: 
+
+networks:
+  task-network:
+    driver: bridge
