@@ -1,0 +1,10 @@
+# GitLeaks configuration
+# Protects against committing secrets to GitHub.
+
+[allowlist]
+description = "Global allowlist for build artifacts and external packages"
+paths = [
+    '''node_modules/''',
+    '''package-lock.json''',
+    '''dist/'''
+]
