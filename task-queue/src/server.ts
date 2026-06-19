@@ -36,3 +36,4 @@ function startServer(): void {
 }
 
 startServer();
+logger.info("Server Started");
