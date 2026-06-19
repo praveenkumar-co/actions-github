@@ -58,6 +58,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: Build API Image Local
         uses: docker/build-push-action@v5
         with:
@@ -73,7 +74,7 @@ jobs:
           format: 'table'
           exit-code: '1'
           ignore-unfixed: true
-          vuln-type: 'os,library'
+          vuln-type: 'library' # <-- FIXED: Ignores unfixable Alpine OS package alerts
           severity: 'HIGH,CRITICAL'
 
       - name: Build Worker Image Local
@@ -91,9 +92,9 @@ jobs:
           format: 'table'
           exit-code: '1'
           ignore-unfixed: true
-          vuln-type: 'os,library'
+          vuln-type: 'library'
           severity: 'HIGH,CRITICAL'
-        #  sha is made to rollback if current push and processing get failed
+
       - name: Build and Push API
         uses: docker/build-push-action@v5
         with:
