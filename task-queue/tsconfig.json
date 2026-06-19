@@ -12,7 +12,7 @@
     "skipLibCheck": true,                      
     "forceConsistentCasingInFileNames": true,    
     "resolveJsonModule": true,
-    "types": ["node"]
+    "types": ["node", "jest"]
   },
   "include": ["src/**/*", "worker/**/*", "tests/**/*"],
   "exclude": ["node_modules", "dist"]
