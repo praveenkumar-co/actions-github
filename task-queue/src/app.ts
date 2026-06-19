@@ -13,7 +13,7 @@ app.use(express.json());
 app.use(
   pinoHttp({
     logger,
-    customLogLevel: (req, res, err) => {
+    customLogLevel: (req, res, _err) => {
       if (req.url === "/healthz" || req.url === "/readyz") return "silent";
       if (res.statusCode && res.statusCode >= 500) return "error";
       if (res.statusCode && res.statusCode >= 400) return "warn";
@@ -69,7 +69,7 @@ app.get("/metrics", async (req: Request, res: Response) => {
 app.use("/tasks", tasksRouter);
 app.use("/", healthRouter);
 
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
   const status = err.status || 500;
   logger.error({ err, path: req.path }, "Express route execution error");
   res.status(status).json({

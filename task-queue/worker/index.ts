@@ -1,4 +1,4 @@
-import { Worker, Job, RedisConnection } from "bullmq";
+import { Worker, Job } from "bullmq";
 import config from "../src/config";
 import { getRedisOptions } from "../src/queue/client";
 import { taskProcessor, TaskJobData } from "./processors/taskProcessor";

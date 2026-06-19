@@ -1,4 +1,4 @@
-import { Queue, Job } from "bullmq";
+import { Queue } from "bullmq";
 import config from "../config";
 import { getRedisOptions } from "./client";
 import logger from "../observability/logger";
