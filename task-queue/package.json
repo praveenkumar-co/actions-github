@@ -18,8 +18,8 @@
     "test:coverage": "jest --coverage --runInBand",
     "lint": "eslint src worker tests --ext .ts",
     "lint:fix": "eslint src worker tests --ext .ts --fix",
-    "format": "prettier --write 'src/**/*.ts' 'worker/**/*.ts' 'tests/**/*.ts'",
-    "format:check": "prettier --check 'src/**/*.ts' 'worker/**/*.ts' 'tests/**/*.ts'",
+    "format": "prettier --write --no-error-on-unmatched-pattern 'src/**/*.ts' 'worker/**/*.ts' 'tests/**/*.ts'",
+    "format:check": "prettier --check --no-error-on-unmatched-pattern 'src/**/*.ts' 'worker/**/*.ts' 'tests/**/*.ts'",
     "db:migrate": "ts-node src/db/migrate.ts"
   },
   "dependencies": {

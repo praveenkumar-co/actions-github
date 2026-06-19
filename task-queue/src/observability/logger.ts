@@ -1,5 +1,5 @@
-import pino from 'pino';
-import config from '../config';
+import pino from "pino";
+import config from "../config";
 
 const logger = pino({
   level: config.log.level,
@@ -7,22 +7,27 @@ const logger = pino({
     ? {}
     : {
         transport: {
-          target: 'pino-pretty',
+          target: "pino-pretty",
           options: {
             colorize: true,
-            translateTime: 'SYS:HH:MM:ss',
-            ignore: 'pid,hostname',
+            translateTime: "SYS:HH:MM:ss",
+            ignore: "pid,hostname",
           },
         },
       }),
   base: {
-    service: 'task-queue-api',
+    service: "task-queue-api",
     env: config.env,
-    pod: process.env.POD_NAME || 'local',
+    pod: process.env.POD_NAME || "local",
   },
   redact: {
-    paths: ['req.headers.authorization', 'req.headers.cookie', '*.password', '*.token'],
-    censor: '[REDACTED]',
+    paths: [
+      "req.headers.authorization",
+      "req.headers.cookie",
+      "*.password",
+      "*.token",
+    ],
+    censor: "[REDACTED]",
   },
 });
 

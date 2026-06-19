@@ -1,6 +1,6 @@
-import Redis, { RedisOptions } from 'ioredis';
-import config from '../config';
-import logger from '../observability/logger';
+import Redis, { RedisOptions } from "ioredis";
+import config from "../config";
+import logger from "../observability/logger";
 
 let redisConnection: Redis | null = null;
 
@@ -9,7 +9,7 @@ export function getRedisConnection(): Redis {
 
   logger.info(
     { host: config.redis.host, port: config.redis.port },
-    'Connecting to Redis queue broker...'
+    "Connecting to Redis queue broker...",
   );
 
   redisConnection = new Redis({
@@ -20,15 +20,18 @@ export function getRedisConnection(): Redis {
     // Connection retry strategy (reconnect on network loss)
     retryStrategy(times) {
       const delay = Math.min(times * 100, 3000); // Backoff capped at 3s
-      logger.warn({ attempt: times, delay }, 'Redis connection lost. Retrying...');
+      logger.warn(
+        { attempt: times, delay },
+        "Redis connection lost. Retrying...",
+      );
       return delay;
     },
   });
-  redisConnection.on('connect', () => {
-    logger.info('Redis connection successfully established');
+  redisConnection.on("connect", () => {
+    logger.info("Redis connection successfully established");
   });
-  redisConnection.on('error', (err) => {
-    logger.error({ err }, 'Redis connection error');
+  redisConnection.on("error", (err) => {
+    logger.error({ err }, "Redis connection error");
   });
   return redisConnection;
 }
@@ -41,7 +44,10 @@ export function getRedisOptions(): RedisOptions {
     maxRetriesPerRequest: config.redis.maxRetriesPerRequest,
     retryStrategy(times) {
       const delay = Math.min(times * 100, 3000);
-      logger.warn({ attempt: times, delay }, 'Redis connection lost. Retrying...');
+      logger.warn(
+        { attempt: times, delay },
+        "Redis connection lost. Retrying...",
+      );
       return delay;
     },
   };
@@ -49,8 +55,8 @@ export function getRedisOptions(): RedisOptions {
 const cleanup = async () => {
   if (redisConnection) {
     await redisConnection.quit();
-    logger.info('Redis connection closed cleanly');
+    logger.info("Redis connection closed cleanly");
   }
 };
-process.on('SIGTERM', cleanup);
-process.on('SIGINT', cleanup);
+process.on("SIGTERM", cleanup);
+process.on("SIGINT", cleanup);
