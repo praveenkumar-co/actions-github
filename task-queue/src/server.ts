@@ -34,5 +34,5 @@ function startServer(): void {
   process.on('SIGTERM', () => handleShutdown('SIGTERM'));
   process.on('SIGINT', () => handleShutdown('SIGINT'));
 }
-console.log('Is everything ok !');
+
 startServer();
