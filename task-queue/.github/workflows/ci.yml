@@ -30,8 +30,7 @@ jobs:
         run: |
           npm run format:check
           npm run lint
-
-      # ── Secret Scan ──
+          
       - name: Run GitLeaks
         uses: gitleaks/gitleaks-action@v2
         env:
@@ -93,7 +92,7 @@ jobs:
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'HIGH,CRITICAL'
-
+        #  sha is made to rollback if current push and processing get failed
       - name: Build and Push API
         uses: docker/build-push-action@v5
         with:
