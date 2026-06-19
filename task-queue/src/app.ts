@@ -3,7 +3,6 @@ import pinoHttp from 'pino-http';
 import config from './config';
 import logger from './observability/logger';
 import * as metrics from './observability/metrics';
-
 import tasksRouter from './routes/task';
 import healthRouter from './routes/health';
 
@@ -69,7 +68,6 @@ app.use('/', healthRouter);
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   const status = err.status || 500;
   logger.error({ err, path: req.path }, 'Express route execution error');
-  
   res.status(status).json({
     error: {
       message: config.isProduction ? 'Internal Server Error' : err.message,

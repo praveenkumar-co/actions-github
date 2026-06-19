@@ -6,6 +6,7 @@ import logger from '../observability/logger';
 const router: Router = express.Router();
 
 router.get('/healthz', (req: Request, res: Response) => {
+    logger.info("Health route is working perfectly ");
   res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
