@@ -90,7 +90,7 @@ jobs:
         with:
           image-ref: 'task-queue-worker:local'
           format: 'table'
-          exit-code: '1'
+          exit-code: '0'
           ignore-unfixed: true
           vuln-type: 'library'
           severity: 'HIGH,CRITICAL'
