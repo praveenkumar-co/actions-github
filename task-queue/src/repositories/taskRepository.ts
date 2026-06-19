@@ -1,13 +1,8 @@
 // use of taskRepo is to :Query Organization: SQL queries can get long and messy. Moving them to a repository file keeps your controllers clean.
-import { Database as SqliteDatabase } from "better-sqlite3";
-import { getDb } from "../db/client";
+import { Database as SqliteDatabase } from 'better-sqlite3';
+import { getDb } from '../db/client';
 
-export type TaskStatus =
-  | "pending"
-  | "processing"
-  | "completed"
-  | "failed"
-  | "cancelled";
+export type TaskStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
 
 export interface Task {
   id: string;
@@ -62,48 +57,44 @@ class TaskRepository {
     stmt.run(
       task.id,
       JSON.stringify(task.payload || {}),
-      task.status || "pending",
+      task.status || 'pending',
       task.priority || 0,
-      task.maxAttempts || 3,
+      task.maxAttempts || 3
     );
 
     return this.findById(task.id)!;
   }
 
   findById(id: string): Task | null {
-    const stmt = this.db.prepare("SELECT * FROM tasks WHERE id = ?");
+    const stmt = this.db.prepare('SELECT * FROM tasks WHERE id = ?');
     const row = stmt.get(id);
     return this._deserializeTask(row);
   }
 
-  updateStatus(
-    id: string,
-    status: TaskStatus,
-    extraFields: UpdateStatusOptions = {},
-  ): Task {
-    const updates = ["status = ?"];
+  updateStatus(id: string, status: TaskStatus, extraFields: UpdateStatusOptions = {}): Task {
+    const updates = ['status = ?'];
     const params: any[] = [status];
 
     if (extraFields.startedAt !== undefined) {
-      updates.push("started_at = ?");
+      updates.push('started_at = ?');
       params.push(extraFields.startedAt);
     }
     if (extraFields.completedAt !== undefined) {
-      updates.push("completed_at = ?");
+      updates.push('completed_at = ?');
       params.push(extraFields.completedAt);
     }
     if (extraFields.error !== undefined) {
-      updates.push("error = ?");
+      updates.push('error = ?');
       params.push(extraFields.error ? JSON.stringify(extraFields.error) : null);
     }
     if (extraFields.attempts !== undefined) {
-      updates.push("attempts = ?");
+      updates.push('attempts = ?');
       params.push(extraFields.attempts);
     }
 
     params.push(id);
 
-    const query = `UPDATE tasks SET ${updates.join(", ")} WHERE id = ?`;
+    const query = `UPDATE tasks SET ${updates.join(', ')} WHERE id = ?`;
     const stmt = this.db.prepare(query);
     const result = stmt.run(...params);
 
@@ -119,15 +110,15 @@ class TaskRepository {
     offset = 0,
     status,
   }: { limit?: number; offset?: number; status?: TaskStatus } = {}): Task[] {
-    let query = "SELECT * FROM tasks";
+    let query = 'SELECT * FROM tasks';
     const params: any[] = [];
 
     if (status) {
-      query += " WHERE status = ?";
+      query += ' WHERE status = ?';
       params.push(status);
     }
 
-    query += " ORDER BY created_at DESC LIMIT ? OFFSET ?";
+    query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
     params.push(limit, offset);
 
     const stmt = this.db.prepare(query);
@@ -137,15 +128,13 @@ class TaskRepository {
   }
 
   delete(id: string): boolean {
-    const stmt = this.db.prepare("DELETE FROM tasks WHERE id = ?");
+    const stmt = this.db.prepare('DELETE FROM tasks WHERE id = ?');
     const result = stmt.run(id);
     return result.changes > 0;
   }
 
   getCountsByStatus(): { status: string; count: number }[] {
-    const stmt = this.db.prepare(
-      "SELECT status, COUNT(*) as count FROM tasks GROUP BY status",
-    );
+    const stmt = this.db.prepare('SELECT status, COUNT(*) as count FROM tasks GROUP BY status');
     return stmt.all() as { status: string; count: number }[];
   }
 }

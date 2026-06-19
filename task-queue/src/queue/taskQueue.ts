@@ -1,7 +1,7 @@
-import { Queue } from "bullmq";
-import config from "../config";
-import { getRedisOptions } from "./client";
-import logger from "../observability/logger";
+import { Queue } from 'bullmq';
+import config from '../config';
+import { getRedisOptions } from './client';
+import logger from '../observability/logger';
 
 const connection = getRedisOptions();
 
@@ -10,7 +10,7 @@ export const taskQueue = new Queue(config.queue.name, {
   defaultJobOptions: {
     attempts: 3, // Retry failed jobs up to 3 times
     backoff: {
-      type: "exponential",
+      type: 'exponential',
       delay: 1000,
     },
     // BullMQ stores completed/failed jobs in Redis. We must prune them!
@@ -24,4 +24,4 @@ export const taskQueue = new Queue(config.queue.name, {
     },
   },
 });
-logger.info({ queueName: config.queue.name }, "BullMQ task queue registered");
+logger.info({ queueName: config.queue.name }, 'BullMQ task queue registered');
