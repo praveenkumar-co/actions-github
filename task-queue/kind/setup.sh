@@ -16,17 +16,20 @@ if ! command -v docker &> /dev/null; then
     echo " docker is not running. Please start Docker Desktop."
     exit 1
 fi
-echo "Step 2: Cleaning up any existing cluster..."
-kind delete cluster --name "$CLUSTER_NAME" || true
-echo "Step 3: Spinning up Kind cluster..."
-kind create cluster --name "$CLUSTER_NAME" --config kind/kind-config.yaml
-echo "Step 4: Installing NGINX Ingress Controller..."
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
-echo "Waiting for Ingress Controller to be ready (this can take ~1 minute)..."
-kubectl wait --namespace ingress-nginx \
-  --for=condition=ready pod \
-  --selector=app.kubernetes.io/component=controller \
-  --timeout=120s
+if kind get clusters | grep -q "^${CLUSTER_NAME}$"; then
+    echo "✨ Kind cluster '${CLUSTER_NAME}' already exists. Skipping recreation."
+else
+    echo "🏗️ Step 3: Spinning up Kind cluster..."
+    kind create cluster --name "$CLUSTER_NAME" --config kind/kind-config.yaml
+    
+    echo "🕸️ Step 4: Installing NGINX Ingress Controller..."
+    kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+fi
+
+echo "⏳ Waiting for Ingress Controller deployment to be created..."
+sleep 5
+echo "⏳ Waiting for Ingress Controller to be fully rolled out..."
+kubectl rollout status deployment/ingress-nginx-controller -n ingress-nginx --timeout=300s
 echo "Step 5: Building API and Worker Docker images"
 docker build -t task-queue-api:local -f docker/Dockerfile.api .
 docker build -t task-queue-worker:local -f docker/Dockerfile.worker .
