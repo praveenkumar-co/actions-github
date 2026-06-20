@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  namespace: task-queue
+  labels:
+    app: worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: worker
+  template:
+    metadata:
+      labels:
+        app: worker
+    spec:
+      containers:
+      - name: worker
+        image: task-queue-worker:local
+        imagePullPolicy: Never  
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: REDIS_HOST
+          value: "redis"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: DB_PATH
+          value: "/usr/src/app/data/tasks.db"
+        - name: WORKER_CONCURRENCY
+          value: "5"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 300m
+            memory: 256Mi
+        volumeMounts:
+        - name: shared-db
+          mountPath: /usr/src/app/data
+      volumes:
+      - name: shared-db
+        persistentVolumeClaim:
+          claimName: sqlite-pvc
