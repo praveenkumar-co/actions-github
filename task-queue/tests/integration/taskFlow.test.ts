@@ -72,9 +72,7 @@ describe('Task Queue Integration Test Suite', () => {
     });
 
     it('should return 400 if payload is missing or invalid', async () => {
-      const response = await request(app)
-        .post('/tasks')
-        .send({ priority: 5 });
+      const response = await request(app).post('/tasks').send({ priority: 5 });
 
       expect(response.status).toBe(400);
       expect(response.body.error).toBe('Payload must be a non-empty JSON object');
@@ -82,8 +80,12 @@ describe('Task Queue Integration Test Suite', () => {
 
     it('should list tasks with pagination', async () => {
       // Create test tasks
-      db.prepare("INSERT INTO tasks (id, payload, status, priority) VALUES ('task-1', '{}', 'pending', 0)").run();
-      db.prepare("INSERT INTO tasks (id, payload, status, priority) VALUES ('task-2', '{}', 'completed', 0)").run();
+      db.prepare(
+        "INSERT INTO tasks (id, payload, status, priority) VALUES ('task-1', '{}', 'pending', 0)"
+      ).run();
+      db.prepare(
+        "INSERT INTO tasks (id, payload, status, priority) VALUES ('task-2', '{}', 'completed', 0)"
+      ).run();
 
       const response = await request(app).get('/tasks');
       expect(response.status).toBe(200);
@@ -96,7 +98,9 @@ describe('Task Queue Integration Test Suite', () => {
     });
 
     it('should retrieve a specific task', async () => {
-      db.prepare("INSERT INTO tasks (id, payload, status, priority) VALUES ('task-123', '{\"test\":true}', 'pending', 0)").run();
+      db.prepare(
+        "INSERT INTO tasks (id, payload, status, priority) VALUES ('task-123', '{\"test\":true}', 'pending', 0)"
+      ).run();
 
       const response = await request(app).get('/tasks/task-123');
       expect(response.status).toBe(200);
@@ -110,7 +114,9 @@ describe('Task Queue Integration Test Suite', () => {
     });
 
     it('should delete a task', async () => {
-      db.prepare("INSERT INTO tasks (id, payload, status, priority) VALUES ('task-del', '{}', 'pending', 0)").run();
+      db.prepare(
+        "INSERT INTO tasks (id, payload, status, priority) VALUES ('task-del', '{}', 'pending', 0)"
+      ).run();
 
       const response = await request(app).delete('/tasks/task-del');
       expect(response.status).toBe(204);
