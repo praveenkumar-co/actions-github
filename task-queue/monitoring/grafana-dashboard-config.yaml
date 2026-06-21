@@ -1,0 +1,130 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-config
+  namespace: task-queue
+data:
+  task-queue-dashboard.json: |
+    {
+      "annotations": { "list": [] },
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 1,
+      "id": null,
+      "links": [],
+      "liveNow": false,
+      "panels": [
+        {
+          "title": "API Request Rate (Throughput)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+          "id": 1,
+          "targets": [
+            {
+              "expr": "sum(rate(taskqueue_http_requests_total[1m])) by (method, route)",
+              "legendFormat": "{{method}} {{route}}",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "custom": { "drawStyle": "line", "lineInterpolation": "smooth" },
+              "unit": "reqps"
+            }
+          }
+        },
+        {
+          "title": "API HTTP Error Rate",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+          "id": 2,
+          "targets": [
+            {
+              "expr": "sum(rate(taskqueue_http_requests_total{status_code=~\"[45]..\"}[1m])) / sum(rate(taskqueue_http_requests_total[1m])) * 100",
+              "legendFormat": "Error Rate %",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "custom": { "drawStyle": "line" },
+              "unit": "percent",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "red", "value": 5 }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "title": "API Request Latency (Quantiles)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+          "id": 3,
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum(rate(taskqueue_http_request_duration_seconds_bucket[5m])) by (le))",
+              "legendFormat": "p95 Latency",
+              "refId": "A"
+            },
+            {
+              "expr": "histogram_quantile(0.50, sum(rate(taskqueue_http_request_duration_seconds_bucket[5m])) by (le))",
+              "legendFormat": "p50 (Median) Latency",
+              "refId": "B"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "custom": { "drawStyle": "line", "lineInterpolation": "smooth" },
+              "unit": "s"
+            }
+          }
+        },
+        {
+          "title": "Queue Depth (Pending Jobs in Redis)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+          "id": 4,
+          "targets": [
+            {
+              "expr": "taskqueue_queue_depth",
+              "legendFormat": "Queue Depth ({{queue_name}})",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "custom": { "drawStyle": "line" },
+              "unit": "none"
+            }
+          }
+        },
+        {
+          "title": "Worker Job Processing Rate",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+          "id": 5,
+          "targets": [
+            {
+              "expr": "sum(rate(taskqueue_jobs_processed_total[1m])) by (status)",
+              "legendFormat": "Job {{status}}",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "custom": { "drawStyle": "line" },
+              "unit": "ops"
+            }
+          }
+        }
+      ],
+      "schemaVersion": 39,
+      "tags": ["sre", "task-queue"],
+      "title": "Task Queue SRE Performance Dashboard",
+      "timezone": "browser",
+      "weekStart": ""
+    }

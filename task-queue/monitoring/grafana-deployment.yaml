@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: task-queue
+  labels:
+    app: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+      - name: grafana
+        image: grafana/grafana:10.4.0
+        ports:
+        - containerPort: 3000
+          name: web
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 300m
+            memory: 256Mi
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 15
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 15
+        volumeMounts:
+        - name: provisioning-volume
+          mountPath: /etc/grafana/provisioning/datasources/datasources.yaml
+          subPath: datasources.yaml
+        - name: provisioning-volume
+          mountPath: /etc/grafana/provisioning/dashboards/dashboards.yaml
+          subPath: dashboards.yaml
+        - name: dashboard-volume
+          mountPath: /var/lib/grafana/dashboards
+        - name: storage-volume
+          mountPath: /var/lib/grafana
+      securityContext:
+        fsGroup: 472
+        runAsUser: 472
+        runAsGroup: 472
+      volumes:
+      - name: provisioning-volume
+        configMap:
+          name: grafana-provisioning-config
+      - name: dashboard-volume
+        configMap:
+          name: grafana-dashboard-config
+      - name: storage-volume
+        persistentVolumeClaim:
+          claimName: grafana-pvc
