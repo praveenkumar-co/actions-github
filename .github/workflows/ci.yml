@@ -11,6 +11,7 @@ jobs:
     defaults:
       run:
         working-directory: ./task-queue
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -21,8 +22,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
-          cache-dependency-path: './task-queue/package-lock.json'
+          cache: "npm"
+          cache-dependency-path: "./task-queue/package-lock.json"
 
       - name: Install dependencies
         run: npm ci
@@ -31,7 +32,7 @@ jobs:
         run: |
           npm run format:check
           npm run lint
-          
+
       - name: Run GitLeaks
         uses: gitleaks/gitleaks-action@v2
         env:
@@ -43,6 +44,7 @@ jobs:
   build-and-push:
     needs: security-and-test
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -70,12 +72,12 @@ jobs:
       - name: Run Trivy vulnerability scanner on API
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'task-queue-api:local'
-          format: 'table'
-          exit-code: '0'
+          image-ref: task-queue-api:local
+          format: table
+          exit-code: "0"
           ignore-unfixed: true
-          vuln-type: 'library' # <-- FIXED: Ignores unfixable Alpine OS package alerts
-          severity: 'HIGH,CRITICAL'
+          vuln-type: library
+          severity: HIGH,CRITICAL
 
       - name: Build Worker Image Local
         uses: docker/build-push-action@v5
@@ -88,12 +90,12 @@ jobs:
       - name: Run Trivy vulnerability scanner on Worker
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'task-queue-worker:local'
-          format: 'table'
-          exit-code: '0'
+          image-ref: task-queue-worker:local
+          format: table
+          exit-code: "0"
           ignore-unfixed: true
-          vuln-type: 'library'
-          severity: 'HIGH,CRITICAL'
+          vuln-type: library
+          severity: HIGH,CRITICAL
 
       - name: Build and Push API
         uses: docker/build-push-action@v5
@@ -114,3 +116,37 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/task-queue-worker:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/task-queue-worker:${{ github.sha }}
+
+  kubernetes-e2e:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create Kind Cluster
+        uses: helm/kind-action@v1.10.0
+        with:
+          cluster_name: task-queue-cluster
+          config: task-queue/kind/kind-config.yaml
+
+      - name: Deploy to Kubernetes
+        run: |
+          cd task-queue
+          chmod +x kind/setup.sh
+          ./kind/setup.sh
+
+      - name: Verify Kubernetes Deployment
+        run: |
+          cd task-queue
+          chmod +x kind/verify.sh
+          ./kind/verify.sh
+
+      - name: Collect Kubernetes Logs
+        if: failure()
+        run: |
+          kubectl get all -A
+          kubectl describe pods -A
+          kubectl logs -A --all-containers=true || true
