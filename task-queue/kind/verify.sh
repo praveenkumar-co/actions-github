@@ -11,23 +11,51 @@ if ! command -v jq &> /dev/null; then
     exit 1
 fi
 
-# Check health endpoint
+# Check health endpoint (with retries for Ingress propagation)
 echo "Checking healthz endpoint..."
-HEALTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost/healthz || echo "failed")
+MAX_HEALTH_ATTEMPTS=15
+ATTEMPT=1
+HEALTH_STATUS=""
+while [ "$ATTEMPT" -le "$MAX_HEALTH_ATTEMPTS" ]; do
+    HEALTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost/healthz || echo "failed")
+    if [ "$HEALTH_STATUS" = "200" ]; then
+        echo "✅ Healthz is healthy!"
+        break
+    fi
+    echo "Waiting for healthz to be ready (attempt $ATTEMPT/$MAX_HEALTH_ATTEMPTS, status: $HEALTH_STATUS)..."
+    sleep 2
+    ATTEMPT=$((ATTEMPT + 1))
+done
+
 if [ "$HEALTH_STATUS" != "200" ]; then
     echo "❌ Healthz check failed with status $HEALTH_STATUS"
     exit 1
 fi
-echo "✅ Healthz is healthy!"
 
-# Check readiness endpoint
+# Check readiness endpoint (with retries for backend connection & Ingress sync)
 echo "Checking readyz endpoint..."
-READY_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost/readyz || echo "failed")
+MAX_READY_ATTEMPTS=15
+ATTEMPT=1
+READY_STATUS=""
+while [ "$ATTEMPT" -le "$MAX_READY_ATTEMPTS" ]; do
+    READY_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost/readyz || echo "failed")
+    if [ "$READY_STATUS" = "200" ]; then
+        echo "✅ Readyz is ready!"
+        break
+    fi
+    echo "Waiting for readyz to be ready (attempt $ATTEMPT/$MAX_READY_ATTEMPTS, status: $READY_STATUS)..."
+    sleep 2
+    ATTEMPT=$((ATTEMPT + 1))
+done
+
 if [ "$READY_STATUS" != "200" ]; then
     echo "❌ Readyz check failed with status $READY_STATUS"
+    echo "--- Debug: API Pod Logs ---"
+    kubectl logs -l app=api -n task-queue --tail=50
+    echo "--- Debug: Worker Pod Logs ---"
+    kubectl logs -l app=worker -n task-queue --tail=50
     exit 1
 fi
-echo "✅ Readyz is ready!"
 
 # Submit a task via the API
 echo "Submitting a new task..."
