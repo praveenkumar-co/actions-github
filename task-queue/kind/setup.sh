@@ -21,9 +21,12 @@ if kind get clusters | grep -q "^${CLUSTER_NAME}$"; then
 else
     echo "🏗️ Step 3: Spinning up Kind cluster..."
     kind create cluster --name "$CLUSTER_NAME" --config kind/kind-config.yaml
-    
+fi
+if ! kubectl get namespace ingress-nginx &> /dev/null; then
     echo "🕸️ Step 4: Installing NGINX Ingress Controller..."
     kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+else
+    echo "✨ NGINX Ingress Controller already installed. Skipping installation."
 fi
 
 echo "⏳ Waiting for Ingress Controller deployment to be created..."
