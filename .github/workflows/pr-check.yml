@@ -33,3 +33,36 @@ jobs:
 
       - name: Run Unit Tests
         run: npm run test:unit
+
+  kubernetes-e2e:
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create Kind Cluster
+        uses: helm/kind-action@v1.10.0
+        with:
+          cluster_name: task-queue-cluster
+          config: task-queue/kind/kind-config.yaml
+
+      - name: Deploy to Kubernetes
+        run: |
+          cd task-queue
+          chmod +x kind/setup.sh
+          ./kind/setup.sh
+
+      - name: Verify Kubernetes Deployment
+        run: |
+          cd task-queue
+          chmod +x kind/verify.sh
+          ./kind/verify.sh
+      - name: Collect Kubernetes Logs
+        if: failure()
+        run: |
+          kubectl get all -A
+          kubectl describe pods -A
+          kubectl logs -A --all-containers=true || true
